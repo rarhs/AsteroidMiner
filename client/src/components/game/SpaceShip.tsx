@@ -123,11 +123,19 @@ export default function SpaceShip() {
       if (asteroid.destroyed) return;
       
       const distance = position.current.distanceTo(asteroid.position);
-      const collisionRadius = asteroid.scale * 2 + 1; // Ship radius ~1
       
-      if (distance < collisionRadius) {
-        // Mining collision (gentle)
-        if (distance > collisionRadius * 0.7) {
+      // Refined radius calculations
+      const asteroidBaseRadius = 0.75; // Max vertex displacement factor for icosahedron
+      const asteroidEffectiveRadius = asteroid.scale * asteroidBaseRadius;
+      const shipEffectiveRadius = 1.25; // Generous radius for the cone ship
+      const collisionThreshold = asteroidEffectiveRadius + shipEffectiveRadius;
+
+      if (distance < collisionThreshold) {
+        // Determine if it's a hard collision (damage) or soft collision (mining)
+        // Current logic: damage if distance < 70% of collisionRadius. Let's use 50% of new threshold.
+        const damageThreshold = collisionThreshold * 0.5;
+
+        if (distance >= damageThreshold) { // Mining collision (gentle)
           // Mine resources
           const resourcesGained = asteroid.resources;
           addResources(resourcesGained);
@@ -180,7 +188,7 @@ export default function SpaceShip() {
       }
     });
     
-    console.log(`Ship position: ${position.current.x.toFixed(1)}, ${position.current.y.toFixed(1)}, ${position.current.z.toFixed(1)}`);
+    // console.log(`Ship position: ${position.current.x.toFixed(1)}, ${position.current.y.toFixed(1)}, ${position.current.z.toFixed(1)}`);
   });
   
   return (
