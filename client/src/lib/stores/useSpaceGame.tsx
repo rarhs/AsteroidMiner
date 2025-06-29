@@ -21,7 +21,7 @@ export interface Particle {
   size: number;
 }
 
-export type GameState = "menu" | "playing" | "paused" | "gameOver";
+export type GameState = "menu" | "playing" | "paused" | "gameOver" | "levelComplete";
 
 interface SpaceGameState {
   // Game state
@@ -60,7 +60,7 @@ interface SpaceGameState {
 export const useSpaceGame = create<SpaceGameState>()(
   subscribeWithSelector((set, get) => ({
     // Initial state
-    gameState: "playing",
+    gameState: "menu", // Start in menu
     score: 0,
     resources: 0,
     health: 100,
@@ -122,7 +122,7 @@ export const useSpaceGame = create<SpaceGameState>()(
     })),
     
     resetGame: () => set({
-      gameState: "playing",
+      gameState: "menu", // Reset to menu
       score: 0,
       resources: 0,
       health: 100,
