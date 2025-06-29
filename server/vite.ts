@@ -23,24 +23,26 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server: Server) {
-  const serverOptions = {
-    middlewareMode: true,
-    hmr: { server },
-    allowedHosts: true,
-  };
-
   const vite = await createViteServer({
-    ...viteConfig,
-    configFile: false,
+    ...viteConfig, // Spread base config first
+    configFile: false, // Explicitly disable config file loading if we are providing all options
+    appType: "custom",
+    server: { // Server specific options
+      // any other server options from viteConfig.server should be merged or overridden here
+      allowedHosts: true,
+      middlewareMode: true, // Moved middlewareMode here
+      hmr: { server }, // Moved HMR here
+      // if viteConfig.server exists, ensure its properties are correctly placed or merged
+    },
     customLogger: {
       ...viteLogger,
       error: (msg, options) => {
         viteLogger.error(msg, options);
-        process.exit(1);
+        process.exit(1); // Consider if exiting here is always desired
       },
     },
-    server: serverOptions,
-    appType: "custom",
+    // middlewareMode: true, // No longer top-level
+    // hmr: { server }, // No longer top-level
   });
 
   app.use(vite.middlewares);

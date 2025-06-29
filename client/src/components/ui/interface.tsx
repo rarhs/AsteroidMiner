@@ -1,29 +1,39 @@
 import { useEffect } from "react";
-import { useGame } from "@/lib/stores/useGame";
+import { useSpaceGame, GameState as SpaceGameConcreteState } from "@/lib/stores/useSpaceGame"; // Renamed to avoid conflict
 import { useAudio } from "@/lib/stores/useAudio";
 import { Button } from "./button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
-import { Confetti } from "../game/Confetti";
+import Confetti from "react-confetti"; // Changed import path
 import { VolumeX, Volume2, RotateCw, Trophy } from "lucide-react";
 
 export function Interface() {
-  const restart = useGame((state) => state.restart);
-  const phase = useGame((state) => state.phase);
+  const { gameState, resetGame, setGameState } = useSpaceGame(state => ({
+    gameState: state.gameState,
+    resetGame: state.resetGame,
+    setGameState: state.setGameState,
+  }));
   const { isMuted, toggleMute } = useAudio();
 
-  // Handle clicks on the interface in the ready phase to start the game
+  // Handle clicks on the interface in the menu phase to start the game
   useEffect(() => {
-    if (phase === "ready") {
-      const handleClick = () => {
-        document.activeElement?.blur(); // Remove focus from any button
-        const event = new KeyboardEvent("keydown", { code: "Space" });
-        window.dispatchEvent(event);
+    if (gameState === "menu") {
+      const handleClickToStart = () => {
+        // Check if the click is on a button, if so, don't start the game.
+        // This is a simple check; a more robust solution might involve event.target.closest('button').
+        if ((event?.target as HTMLElement)?.tagName === 'BUTTON' || (event?.target as HTMLElement)?.closest('button')) {
+          return;
+        }
+        // Check if activeElement is an HTMLElement and then call blur
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur(); // Remove focus from any button
+        }
+        setGameState("playing"); // Directly set game state to playing
       };
 
-      window.addEventListener("click", handleClick);
-      return () => window.removeEventListener("click", handleClick);
+      window.addEventListener("click", handleClickToStart);
+      return () => window.removeEventListener("click", handleClickToStart);
     }
-  }, [phase]);
+  }, [gameState, setGameState]);
 
   return (
     <>
@@ -43,7 +53,7 @@ export function Interface() {
         <Button
           variant="outline"
           size="icon"
-          onClick={restart}
+          onClick={resetGame}
           title="Restart Game"
         >
           <RotateCw size={18} />
@@ -51,7 +61,7 @@ export function Interface() {
       </div>
       
       {/* Game completion overlay */}
-      {phase === "ended" && (
+      {gameState === "levelComplete" && (
         <div className="fixed inset-0 flex items-center justify-center z-20 bg-black/30">
           <Card className="w-full max-w-md mx-4 shadow-lg">
             <CardHeader>
@@ -68,7 +78,7 @@ export function Interface() {
             </CardContent>
             
             <CardFooter className="flex justify-center">
-              <Button onClick={restart} className="w-full">
+              <Button onClick={resetGame} className="w-full">
                 Play Again
               </Button>
             </CardFooter>
